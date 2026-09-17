@@ -3,10 +3,10 @@ use sqlx::sqlite::SqlitePool;
 
 #[derive(Serialize, sqlx::FromRow)]
 pub struct Fakt {
-    id: i32,
-    content: String,
-    keyword: String,
-    source: String,
+    pub id: i32,
+    pub content: String,
+    pub keyword: String,
+    pub source: String,
 }
 
 pub async fn get_pool() -> SqlitePool {
@@ -33,8 +33,28 @@ pub async fn get_pool() -> SqlitePool {
 }
 
 pub async fn all_fakts(pool: SqlitePool) -> Vec<Fakt> {
-    sqlx::query_as::<_, Fakt>("SELECT id, content, keyword, source FROM fakts ORDER BY keyword")
-        .fetch_all(&pool)
+    sqlx::query_as::<_, Fakt>(
+        "SELECT id, content, keyword, source FROM fakts ORDER BY keyword COLLATE NOCASE",
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default()
+}
+
+pub async fn id(pool: SqlitePool, id: i32) -> Option<Fakt> {
+    sqlx::query_as::<_, Fakt>("SELECT id, content, keyword, source FROM fakts WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&pool)
         .await
-        .unwrap_or_default()
+        .expect("Failed to query database")
+}
+
+pub async fn random(pool: SqlitePool) -> Fakt {
+    sqlx::query_as::<_, Fakt>(
+        "SELECT id, content, keyword, source FROM fakts ORDER BY RANDOM() LIMIT 1;",
+    )
+    .fetch_optional(&pool)
+    .await
+    .expect("Failed to query database")
+    .expect("Empty database")
 }

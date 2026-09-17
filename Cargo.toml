@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+askama = "0.16.1"
 axum = "0.8.9"
 serde = "1.0.229"
 sqlx = { version = "0.9.0", features = ["sqlite", "runtime-tokio"] }

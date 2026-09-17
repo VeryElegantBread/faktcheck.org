@@ -1,0 +1,114 @@
+use askama::Template;
+use axum::{
+    extract::{Path, State},
+    response::Html,
+};
+use sqlx::SqlitePool;
+
+use crate::db::{self, Fakt};
+
+#[derive(Template)]
+#[template(path = "home.html")]
+struct HomePage {
+    id: i32,
+    fakt: String,
+}
+
+#[derive(Template)]
+#[template(path = "fakt.html")]
+struct FaktPage {
+    keyword: String,
+    fakt: String,
+    source: String,
+}
+
+#[derive(Template)]
+#[template(path = "404.html")]
+struct NotFoundPage;
+
+#[derive(Template)]
+#[template(path = "faktlist.html")]
+struct FaktListPage {
+    faktlist: String,
+}
+
+pub async fn root(State(pool): State<SqlitePool>) -> Html<String> {
+    let fakt = db::random(pool).await;
+    let page = HomePage {
+        id: fakt.id,
+        fakt: format_fakt(&fakt),
+    };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn not_found() -> Html<String> {
+    Html(NotFoundPage.render().expect("Failed to render page"))
+}
+
+pub async fn fakt(Path(id): Path<i32>, State(pool): State<SqlitePool>) -> Html<String> {
+    let Some(fakt) = db::id(pool, id).await else {
+        return not_found().await;
+    };
+
+    let page = FaktPage {
+        fakt: format_fakt(&fakt),
+        keyword: fakt.keyword,
+        source: fakt.source,
+    };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn faktlist(State(pool): State<SqlitePool>) -> Html<String> {
+    let fakts = db::all_fakts(pool);
+
+    let faktlist = format_faktlist(fakts.await);
+
+    let page = FaktListPage { faktlist };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+fn format_fakt(fakt: &Fakt) -> String {
+    let Fakt {
+        content, keyword, ..
+    } = fakt;
+    let length = keyword.len();
+    let mut last_index = 0;
+    let mut formatted = String::new();
+    let lower_content = content.to_lowercase();
+    let lower_keyword = keyword.to_lowercase();
+    for (start_index, _) in lower_content.match_indices(&lower_keyword) {
+        formatted.push_str(&content[last_index..start_index]);
+        formatted.push_str("<b><i>");
+        formatted.push_str(&content[start_index..start_index + length]);
+        formatted.push_str("</i></b>");
+        last_index = start_index + length;
+    }
+    formatted.push_str(&content[last_index..]);
+    formatted
+}
+
+fn format_faktlist(fakts: Vec<Fakt>) -> String {
+    let mut faktlist = String::new();
+
+    let mut last_letter = 'A';
+    for fakt in fakts {
+        let letter = fakt.keyword.chars().next().unwrap();
+        let lower = letter.to_lowercase().next().unwrap();
+        if lower != last_letter {
+            last_letter = lower;
+            faktlist.push_str("<h2>");
+            faktlist.push(letter.to_uppercase().next().unwrap());
+            faktlist.push_str("</h2>");
+        }
+        faktlist.push_str("<p><a href=\"/fakt/");
+        faktlist.push_str(&fakt.id.to_string());
+        faktlist.push_str("\">");
+        faktlist.push_str(&format_fakt(&fakt));
+        faktlist.push_str("</a></p>");
+    }
+
+    faktlist
+}
