@@ -80,3 +80,15 @@ pub async fn add(pool: SqlitePool, payload: pages::AddForm) -> Result<i32, Strin
 
     Ok(result.last_insert_rowid().try_into().unwrap())
 }
+
+pub async fn del(pool: SqlitePool, id: i32) -> Result<(), String> {
+    let Ok(_) = sqlx::query("DELETE FROM fakts WHERE id = ?")
+        .bind(id)
+        .execute(&pool)
+        .await
+    else {
+        return Err("Error: failed to query database.".to_string());
+    };
+
+    Ok(())
+}

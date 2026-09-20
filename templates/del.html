@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Delete - FaktCheck.org</title>
+    </head>
+    <body>
+
+        <h1><a href="/">FaktCheck.org</a></h1>
+        <p>{{fakt|safe}}</p>
+        <p>Source: {{source}}</p>
+
+        <form method="POST" action="/del/{{id}}">
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br><br>
+            <input type="submit" value="Delete">
+        </form>
+
+        <p>{{message|safe}}</p>
+
+    </body>
+</html>

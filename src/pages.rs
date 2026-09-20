@@ -49,6 +49,20 @@ pub struct AddForm {
     password: String,
 }
 
+#[derive(Template)]
+#[template(path = "del.html")]
+struct DelPage {
+    id: i32,
+    fakt: String,
+    source: String,
+    message: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct DelForm {
+    password: String,
+}
+
 pub async fn root(State(pool): State<SqlitePool>) -> Html<String> {
     let fakt = db::random(pool).await;
     let page = HomePage {
@@ -98,8 +112,7 @@ pub async fn add_post(
     State(pool): State<SqlitePool>,
     Form(payload): Form<AddForm>,
 ) -> Html<String> {
-    let correct_pass = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD not set");
-    if payload.password != correct_pass {
+    if !is_correct_password(&payload.password) {
         let page = AddPage {
             message: "Error: incorrect password.".to_string(),
         };
@@ -131,6 +144,60 @@ pub async fn add_post(
     message.push_str("</a>");
 
     let page = AddPage { message };
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn del(Path(id): Path<i32>, State(pool): State<SqlitePool>) -> Html<String> {
+    let Some(fakt) = db::id(pool, id).await else {
+        return not_found().await;
+    };
+
+    let page = DelPage {
+        id,
+        fakt: format_fakt(&fakt),
+        source: fakt.source,
+        message: String::new(),
+    };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn del_post(
+    Path(id): Path<i32>,
+    State(pool): State<SqlitePool>,
+    Form(payload): Form<DelForm>,
+) -> Html<String> {
+    let Some(fakt) = db::id(pool.clone(), id).await else {
+        return not_found().await;
+    };
+
+    if !is_correct_password(&payload.password) {
+        let page = DelPage {
+            id,
+            fakt: format_fakt(&fakt),
+            source: fakt.source,
+            message: "Error: incorrect password.".to_string(),
+        };
+        return Html(page.render().expect("Failed to render page"));
+    }
+
+    if let Err(error) = db::del(pool, id).await {
+        let page = DelPage {
+            id,
+            fakt: format_fakt(&fakt),
+            source: fakt.source,
+            message: error,
+        };
+        return Html(page.render().expect("Failed to render page"));
+    };
+
+    let page = DelPage {
+        id,
+        fakt: format_fakt(&fakt),
+        source: fakt.source,
+        message: "Successfully deleted fakt. <a href=\"/fakts\">Fakt List</a>".to_string(),
+    };
+
     Html(page.render().expect("Failed to render page"))
 }
 
@@ -175,4 +242,9 @@ fn format_faktlist(fakts: Vec<Fakt>) -> String {
     }
 
     faktlist
+}
+
+fn is_correct_password(pass: &str) -> bool {
+    let correct_pass = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD not set");
+    pass == correct_pass
 }

@@ -27,6 +27,8 @@ async fn main() {
         .route("/fakts", get(pages::faktlist))
         .route("/add", get(pages::add))
         .route("/add", post(pages::add_post))
+        .route("/del/{id}", get(pages::del))
+        .route("/del/{id}", post(pages::del_post))
         .fallback(pages::not_found)
         .with_state(pool.await);
 
