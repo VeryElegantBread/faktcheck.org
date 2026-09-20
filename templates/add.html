@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Add - FaktCheck.org</title>
+    </head>
+    <body>
+
+        <h1><a href="/">FaktCheck.org</a></h1>
+        <form method="POST" action="/add">
+            <label for="fakt">Fakt:</label><br>
+            <input type="text" id="fakt" name="fakt"><br>
+            <label for="keywoad">Keyword:</label><br>
+            <input type="text" id="keyword" name="keyword"><br>
+            <label for="source">Source:</label><br>
+            <input type="text" id="source" name="source"><br>
+            <label for="sourceword">Password:</label><br>
+            <input type="password" id="password" name="password"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+
+        <p>{{message|safe}}</p>
+
+    </body>
+</html>

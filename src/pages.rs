@@ -1,5 +1,8 @@
+use std::env;
+
 use askama::Template;
 use axum::{
+    Form,
     extract::{Path, State},
     response::Html,
 };
@@ -30,6 +33,20 @@ struct NotFoundPage;
 #[template(path = "faktlist.html")]
 struct FaktListPage {
     faktlist: String,
+}
+
+#[derive(Template)]
+#[template(path = "add.html")]
+struct AddPage {
+    message: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct AddForm {
+    pub fakt: String,
+    pub keyword: String,
+    pub source: String,
+    password: String,
 }
 
 pub async fn root(State(pool): State<SqlitePool>) -> Html<String> {
@@ -67,6 +84,53 @@ pub async fn faktlist(State(pool): State<SqlitePool>) -> Html<String> {
 
     let page = FaktListPage { faktlist };
 
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn add() -> Html<String> {
+    let page = AddPage {
+        message: String::new(),
+    };
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn add_post(
+    State(pool): State<SqlitePool>,
+    Form(payload): Form<AddForm>,
+) -> Html<String> {
+    let correct_pass = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD not set");
+    if payload.password != correct_pass {
+        let page = AddPage {
+            message: "Error: incorrect password.".to_string(),
+        };
+        return Html(page.render().expect("Failed to render page"));
+    }
+
+    if payload.fakt.trim().is_empty()
+        || payload.keyword.trim().is_empty()
+        || payload.source.trim().is_empty()
+    {
+        let page = AddPage {
+            message: "Error: fields cannot be empty.".to_string(),
+        };
+        return Html(page.render().expect("Failed to render page"));
+    }
+
+    let id = match db::add(pool, payload).await {
+        Ok(id) => id,
+        Err(error) => {
+            let page = AddPage { message: error };
+            return Html(page.render().expect("Failed to render page"));
+        }
+    };
+
+    let mut message = "New fakt: <a href=\"/fakt/".to_string();
+    message.push_str(&id.to_string());
+    message.push_str("\">");
+    message.push_str(&id.to_string());
+    message.push_str("</a>");
+
+    let page = AddPage { message };
     Html(page.render().expect("Failed to render page"))
 }
 

@@ -1,6 +1,8 @@
 use serde::Serialize;
 use sqlx::sqlite::SqlitePool;
 
+use crate::pages;
+
 #[derive(Serialize, sqlx::FromRow)]
 pub struct Fakt {
     pub id: i32,
@@ -10,7 +12,13 @@ pub struct Fakt {
 }
 
 pub async fn get_pool() -> SqlitePool {
-    let db_name = std::env::var("FAKTCHECK_DB_NAME").unwrap_or(String::from("fakts.db"));
+    let db_name = match std::env::var("FAKTCHECK_DB_NAME") {
+        Ok(name) => name,
+        Err(_) => {
+            println!("FAKTCHECK_DB_NAME not set; using fakts.db");
+            "fakts.db".to_string()
+        }
+    };
     let db_url = format!("sqlite:{}", db_name);
 
     let pool = SqlitePool::connect(&db_url)
@@ -57,4 +65,18 @@ pub async fn random(pool: SqlitePool) -> Fakt {
     .await
     .expect("Failed to query database")
     .expect("Empty database")
+}
+
+pub async fn add(pool: SqlitePool, payload: pages::AddForm) -> Result<i32, String> {
+    let Ok(result) = sqlx::query("INSERT INTO fakts (content, keyword, source) VALUES (?, ?, ?)")
+        .bind(&payload.fakt)
+        .bind(&payload.keyword)
+        .bind(&payload.source)
+        .execute(&pool)
+        .await
+    else {
+        return Err("Error: failed to query database.".to_string());
+    };
+
+    Ok(result.last_insert_rowid().try_into().unwrap())
 }
