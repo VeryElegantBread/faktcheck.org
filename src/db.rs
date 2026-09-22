@@ -92,3 +92,18 @@ pub async fn del(pool: SqlitePool, id: i32) -> Result<(), String> {
 
     Ok(())
 }
+
+pub async fn edit(pool: SqlitePool, row: Fakt) -> Result<(), String> {
+    let Ok(_) = sqlx::query("UPDATE fakts SET content = ?, keyword = ?, source = ? WHERE id = ?")
+        .bind(row.content)
+        .bind(row.keyword)
+        .bind(row.source)
+        .bind(row.id)
+        .execute(&pool)
+        .await
+    else {
+        return Err("Error: failed to query database.".to_string());
+    };
+
+    Ok(())
+}

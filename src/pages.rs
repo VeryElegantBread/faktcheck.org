@@ -63,6 +63,25 @@ pub struct DelForm {
     password: String,
 }
 
+#[derive(Template)]
+#[template(path = "edit.html")]
+struct EditPage {
+    id: i32,
+    keyword: String,
+    fakt: String,
+    source: String,
+    content: String,
+    message: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct EditForm {
+    pub fakt: String,
+    pub keyword: String,
+    pub source: String,
+    password: String,
+}
+
 pub async fn root(State(pool): State<SqlitePool>) -> Html<String> {
     let fakt = db::random(pool).await;
     let page = HomePage {
@@ -201,10 +220,101 @@ pub async fn del_post(
     Html(page.render().expect("Failed to render page"))
 }
 
+pub async fn edit(Path(id): Path<i32>, State(pool): State<SqlitePool>) -> Html<String> {
+    let Some(fakt) = db::id(pool, id).await else {
+        return not_found().await;
+    };
+
+    let page = EditPage {
+        id,
+        fakt: format_fakt(&fakt),
+        content: fakt.content,
+        keyword: fakt.keyword,
+        source: fakt.source,
+        message: String::new(),
+    };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn edit_post(
+    Path(id): Path<i32>,
+    State(pool): State<SqlitePool>,
+    Form(payload): Form<EditForm>,
+) -> Html<String> {
+    let Some(fakt) = db::id(pool.clone(), id).await else {
+        return not_found().await;
+    };
+
+    if !is_correct_password(&payload.password) {
+        let page = EditPage {
+            id,
+            fakt: format_fakt(&fakt),
+            content: fakt.content,
+            keyword: fakt.keyword,
+            source: fakt.source,
+            message: "Error: incorrect password.".to_string(),
+        };
+        return Html(page.render().expect("Failed to render page"));
+    }
+
+    if payload.fakt.trim().is_empty()
+        || payload.keyword.trim().is_empty()
+        || payload.source.trim().is_empty()
+    {
+        let page = EditPage {
+            id,
+            fakt: format_fakt(&fakt),
+            content: fakt.content,
+            keyword: fakt.keyword,
+            source: fakt.source,
+            message: "Error: fields cannot be empty.".to_string(),
+        };
+        return Html(page.render().expect("Failed to render page"));
+    }
+
+    let row = Fakt {
+        id,
+        content: payload.fakt.clone(),
+        keyword: payload.keyword.clone(),
+        source: payload.source.clone(),
+    };
+
+    if let Err(error) = db::edit(pool, row).await {
+        let page = EditPage {
+            id,
+            fakt: format_fakt(&fakt),
+            content: fakt.content,
+            keyword: fakt.keyword,
+            source: fakt.source,
+            message: error,
+        };
+        return Html(page.render().expect("Failed to render page"));
+    };
+
+    let mut message = "Edited fakt: <a href=\"/fakt/".to_string();
+    message.push_str(&id.to_string());
+    message.push_str("\">");
+    message.push_str(&id.to_string());
+    message.push_str("</a>");
+
+    let page = EditPage {
+        id,
+        fakt: format_content(&payload.fakt, &payload.keyword),
+        content: payload.fakt,
+        keyword: payload.keyword,
+        source: payload.source,
+        message,
+    };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
 fn format_fakt(fakt: &Fakt) -> String {
-    let Fakt {
-        content, keyword, ..
-    } = fakt;
+    format_content(&fakt.content, &fakt.keyword)
+}
+
+fn format_content(content: &str, keyword: &str) -> String {
     let length = keyword.len();
     let mut last_index = 0;
     let mut formatted = String::new();
@@ -245,6 +355,8 @@ fn format_faktlist(fakts: Vec<Fakt>) -> String {
 }
 
 fn is_correct_password(pass: &str) -> bool {
-    let correct_pass = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD not set");
+    let Ok(correct_pass) = env::var("FAKTCHECK_ADMIN_PASSWORD") else {
+        return false;
+    };
     pass == correct_pass
 }

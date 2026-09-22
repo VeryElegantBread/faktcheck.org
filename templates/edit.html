@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Edit - FaktCheck.org</title>
+    </head>
+    <body>
+
+        <h1><a href="/">FaktCheck.org</a></h1>
+        <p>{{fakt|safe}}</p>
+        <p>Keyword: {{keyword}}</p>
+        <p>Source: {{source}}</p>
+
+        <form method="POST" action="/edit/{{id}}">
+            <label for="fakt">Fakt:</label><br>
+            <input type="text" id="fakt" name="fakt" value="{{content}}"><br>
+            <label for="keywoad">Keyword:</label><br>
+            <input type="text" id="keyword" name="keyword" value="{{keyword}}"><br>
+            <label for="source">Source:</label><br>
+            <input type="text" id="source" name="source" value="{{source}}"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br><br>
+            <input type="submit" value="Edit">
+        </form>
+
+        <p>{{message|safe}}</p>
+
+    </body>
+</html>
