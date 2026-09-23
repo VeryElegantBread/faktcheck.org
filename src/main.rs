@@ -16,8 +16,8 @@ async fn main() {
     let port = match std::env::var("FAKTCHECK_PORT") {
         Ok(port) => port,
         Err(_) => {
-            println!("FAKTCHECK_PORT not set; using 3000");
-            "3000".to_string()
+            println!("FAKTCHECK_PORT not set; using 8080");
+            "8080".to_string()
         }
     };
     let bind = format!("0.0.0.0:{}", port);
