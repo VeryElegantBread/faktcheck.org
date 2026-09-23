@@ -26,6 +26,7 @@ async fn main() {
         .route("/", get(pages::root))
         .route("/fakt/{id}", get(pages::fakt))
         .route("/fakts", get(pages::faktlist))
+        .route("/search", get(pages::search))
         .route("/add", get(pages::add))
         .route("/add", post(pages::add_post))
         .route("/del/{id}", get(pages::del))

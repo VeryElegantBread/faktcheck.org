@@ -2,6 +2,34 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+.flex {
+    display: flex;
+    gap: 10px;
+}
+
+form {
+    display: flex;
+    gap: 5px;
+}
+
+input {
+    border: 1px solid #e0e0e0;
+    border-radius: 0px;
+    font-size: 20px;
+}
+
+input:focus {
+    border-color: #3092f4;
+}
+
+input[type="submit"] {
+    background-color: white;
+}
+
+input[type="submit"]:hover {
+    border: 2px solid #3092f4;
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;

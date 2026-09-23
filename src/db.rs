@@ -49,6 +49,18 @@ pub async fn all_fakts(pool: SqlitePool) -> Vec<Fakt> {
     .unwrap_or_default()
 }
 
+pub async fn search(pool: SqlitePool, term: &str) -> Vec<Fakt> {
+    let pattern = format!("%{}%", term);
+
+    sqlx::query_as::<_, Fakt>(
+        "SELECT id, content, keyword, source FROM fakts WHERE content LIKE ? ORDER BY keyword COLLATE NOCASE",
+    )
+    .bind(pattern)
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default()
+}
+
 pub async fn id(pool: SqlitePool, id: i32) -> Option<Fakt> {
     sqlx::query_as::<_, Fakt>("SELECT id, content, keyword, source FROM fakts WHERE id = ?")
         .bind(id)

@@ -1,9 +1,9 @@
-use std::env;
+use std::{collections::HashMap, env};
 
 use askama::Template;
 use axum::{
     Form,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     response::Html,
 };
 use sqlx::SqlitePool;
@@ -32,6 +32,13 @@ struct NotFoundPage;
 #[derive(Template)]
 #[template(path = "faktlist.html")]
 struct FaktListPage {
+    faktlist: String,
+}
+
+#[derive(Template)]
+#[template(path = "search.html")]
+struct SearchPage {
+    search: String,
     faktlist: String,
 }
 
@@ -116,6 +123,23 @@ pub async fn faktlist(State(pool): State<SqlitePool>) -> Html<String> {
     let faktlist = format_faktlist(fakts.await);
 
     let page = FaktListPage { faktlist };
+
+    Html(page.render().expect("Failed to render page"))
+}
+
+pub async fn search(
+    State(pool): State<SqlitePool>,
+    Query(mut params): Query<HashMap<String, String>>,
+) -> Html<String> {
+    let term = params.remove("q").unwrap_or(String::new());
+    let fakts = db::search(pool, &term);
+
+    let faktlist = format_faktlist(fakts.await);
+
+    let page = SearchPage {
+        search: term,
+        faktlist,
+    };
 
     Html(page.render().expect("Failed to render page"))
 }

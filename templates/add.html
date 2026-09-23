@@ -8,19 +8,26 @@
 
         <h1 class="logo"><a href="/">FaktCheck.org</a></h2>
         <a href="/fakts">Fakt List</a>
+        <div class="flex">
+            <form method="GET" action="/search">
+                <input type="text" name="q" required>
+                <input type="submit" value="Search">
+            </form>
+            <a href="/fakts">Fakt List</a>
+        </div>
 
     </header>
     <body>
 
         <form method="POST" action="/add">
             <label for="fakt">Fakt:</label><br>
-            <input type="text" id="fakt" name="fakt"><br>
+            <input type="text" id="fakt" name="fakt" required><br>
             <label for="keywoad">Keyword:</label><br>
-            <input type="text" id="keyword" name="keyword"><br>
+            <input type="text" id="keyword" name="keyword" required><br>
             <label for="source">Source:</label><br>
-            <input type="text" id="source" name="source"><br>
+            <input type="text" id="source" name="source" required><br>
             <label for="password">Password:</label><br>
-            <input type="password" id="password" name="password"><br><br>
+            <input type="password" id="password" name="password" required><br><br>
             <input type="submit" value="Submit">
         </form>
 
