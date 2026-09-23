@@ -2,10 +2,16 @@
 <html>
     <head>
         <title>Edit - FaktCheck.org</title>
+        <link rel="stylesheet" href="/static/style.css">
     </head>
+    <header class="navbar">
+
+        <h1 class="logo"><a href="/">FaktCheck.org</a></h2>
+        <a href="/fakts">Fakt List</a>
+
+    </header>
     <body>
 
-        <h1><a href="/">FaktCheck.org</a></h1>
         <p>{{fakt|safe}}</p>
         <p>Keyword: {{keyword}}</p>
         <p>Source: {{source}}</p>

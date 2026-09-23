@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
 };
 use dotenv::dotenv;
+use tower_http::services::ServeDir;
 
 mod db;
 mod pages;
@@ -31,6 +32,7 @@ async fn main() {
         .route("/del/{id}", post(pages::del_post))
         .route("/edit/{id}", get(pages::edit))
         .route("/edit/{id}", post(pages::edit_post))
+        .nest_service("/static", ServeDir::new("static"))
         .fallback(pages::not_found)
         .with_state(pool.await);
 

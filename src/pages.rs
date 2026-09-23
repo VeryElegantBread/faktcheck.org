@@ -340,9 +340,9 @@ fn format_faktlist(fakts: Vec<Fakt>) -> String {
         let lower = letter.to_lowercase().next().unwrap();
         if lower != last_letter {
             last_letter = lower;
-            faktlist.push_str("<h2>");
+            faktlist.push_str("<h1>");
             faktlist.push(letter.to_uppercase().next().unwrap());
-            faktlist.push_str("</h2>");
+            faktlist.push_str("</h1>");
         }
         faktlist.push_str("<p><a href=\"/fakt/");
         faktlist.push_str(&fakt.id.to_string());
