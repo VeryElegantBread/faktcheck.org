@@ -4,7 +4,7 @@ use askama::Template;
 use axum::{
     Form,
     extract::{Path, Query, State},
-    response::Html,
+    response::{Html, IntoResponse},
 };
 use sqlx::SqlitePool;
 
@@ -87,6 +87,13 @@ pub struct EditForm {
     pub keyword: String,
     pub source: String,
     password: String,
+}
+
+pub async fn style() -> impl IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/css")],
+        include_str!("../static/style.css"),
+    )
 }
 
 pub async fn root(State(pool): State<SqlitePool>) -> Html<String> {

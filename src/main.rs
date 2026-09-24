@@ -3,7 +3,6 @@ use axum::{
     routing::{get, post},
 };
 use dotenv::dotenv;
-use tower_http::services::ServeDir;
 
 mod db;
 mod pages;
@@ -23,6 +22,7 @@ async fn main() {
     let bind = format!("0.0.0.0:{}", port);
 
     let app = Router::new()
+        .route("/style.css", get(pages::style))
         .route("/", get(pages::root))
         .route("/fakt/{id}", get(pages::fakt))
         .route("/fakts", get(pages::faktlist))
@@ -33,7 +33,6 @@ async fn main() {
         .route("/del/{id}", post(pages::del_post))
         .route("/edit/{id}", get(pages::edit))
         .route("/edit/{id}", post(pages::edit_post))
-        .nest_service("/static", ServeDir::new("static"))
         .fallback(pages::not_found)
         .with_state(pool.await);
 
