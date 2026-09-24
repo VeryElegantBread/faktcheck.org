@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
 };
 use dotenv::dotenv;
+use tokio::signal;
 
 mod db;
 mod pages;
@@ -37,5 +38,35 @@ async fn main() {
         .with_state(pool.await);
 
     let listener = tokio::net::TcpListener::bind(bind).await.unwrap();
-    let _ = axum::serve(listener, app).await;
+    let _ = axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await;
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to install CTRL+C signal handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            println!("Received CTRL+C, shutting down...");
+        }
+        _ = terminate => {
+            println!("Received SIGTERM, shutting down...");
+        }
+    }
 }
