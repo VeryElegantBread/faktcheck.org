@@ -2,7 +2,7 @@ use axum::{
     Router,
     routing::{get, post},
 };
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use tokio::signal;
 
 mod db;
